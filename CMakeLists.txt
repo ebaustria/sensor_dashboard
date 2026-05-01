@@ -32,6 +32,7 @@ set(CMAKE_C_EXTENSIONS ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
+set(FREERTOS_DIR "lib/FreeRTOS-Kernel")
 
 # Core MCU flags, CPU type, instruction set and FPU setup
 set(cpu_PARAMS 
@@ -48,6 +49,8 @@ set(sources_SRCS
 # Include directories for all compilers
 set(include_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}/Inc
+    "${FREERTOS_DIR}/include"
+    "${FREERTOS_DIR}/portable/GCC/ARM_CM4F"
 )
 
 # Include directories for each compiler
@@ -89,7 +92,21 @@ link_directories(${CMAKE_PROJECT_NAME} ${link_DIRS})
 add_executable(${CMAKE_PROJECT_NAME})
 
 # Add sources to executable
-target_sources(${CMAKE_PROJECT_NAME} PUBLIC ${sources_SRCS})
+target_sources(${CMAKE_PROJECT_NAME}
+    PUBLIC
+    ${sources_SRCS}
+    PRIVATE
+    "${FREERTOS_DIR}/tasks.c"
+    "${FREERTOS_DIR}/queue.c"
+    "${FREERTOS_DIR}/list.c"
+    "${FREERTOS_DIR}/timers.c"
+    "${FREERTOS_DIR}/event_groups.c"
+    "${FREERTOS_DIR}/stream_buffer.c"
+
+    "${FREERTOS_DIR}/portable/MemMang/heap_4.c"
+
+    "${FREERTOS_DIR}/portable/GCC/ARM_CM4F/port.c"
+)
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
