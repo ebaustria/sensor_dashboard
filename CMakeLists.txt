@@ -33,6 +33,9 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
 set(FREERTOS_DIR "lib/FreeRTOS-Kernel")
+set(CMSIS_DIR "lib/CMSIS")
+set(CMSIS_CORE_DIR "${CMSIS_DIR}/Core")
+set(CMSIS_DEVICE_DIR "${CMSIS_DIR}/Device/ST/STM32L4xx")
 
 # Core MCU flags, CPU type, instruction set and FPU setup
 set(cpu_PARAMS 
@@ -51,6 +54,8 @@ set(include_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}/Inc
     "${FREERTOS_DIR}/include"
     "${FREERTOS_DIR}/portable/GCC/ARM_CM4F"
+    "${CMSIS_CORE_DIR}/Include"
+    "${CMSIS_DEVICE_DIR}/Include"
 )
 
 # Include directories for each compiler
@@ -106,6 +111,8 @@ target_sources(${CMAKE_PROJECT_NAME}
     "${FREERTOS_DIR}/portable/MemMang/heap_4.c"
 
     "${FREERTOS_DIR}/portable/GCC/ARM_CM4F/port.c"
+
+    "${CMSIS_DEVICE_DIR}/Source/Templates/system_stm32l4xx.c"
 )
 
 # Add include paths
@@ -122,6 +129,8 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
     $<$<COMPILE_LANGUAGE:C>: ${symbols_c_SYMB}>
     $<$<COMPILE_LANGUAGE:CXX>: ${symbols_cxx_SYMB}>
     $<$<COMPILE_LANGUAGE:ASM>: ${symbols_asm_SYMB}>
+
+    STM32L476xx
 
     # Configuration specific
     $<$<CONFIG:Debug>:DEBUG>
