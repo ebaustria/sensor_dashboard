@@ -18,8 +18,83 @@
 
 #include <stdint.h>
 
+#include "FreeRTOS.h"
+#include "portmacro.h"
+#include "task.h"
+
+static void prvSetupHardware( void );
+static void vStartTasks( void );
+
+static void vReadUARTTask( void * pvParameters );
+static void vReadI2CTask( void * pvParameters );
+static void vWriteSPITask( void * pvParameters );
+
 int main(void)
 {
-    /* Loop forever */
-	for(;;);
+    prvSetupHardware();
+
+    vStartTasks();
+
+    // vTaskStartScheduler();
+
+	for(;;){}
+}
+
+static void prvSetupHardware( void )
+{
+    /* Setup STM32 system (clock, PLL and Flash configuration) */
+    // SystemInit();
+
+    /* Ensure all priority bits are assigned as preemption priority bits. */
+    // NVIC_PriorityGroupConfig( NVIC_PriorityGroup_4 );
+
+    /* Setup the LED outputs. */
+    // vParTestInitialise();
+
+    /* Configure the button input.  This configures the interrupt to use the
+     * lowest interrupt priority, so it is ok to use the ISR safe FreeRTOS API
+     * from the button interrupt handler. */
+    // STM_EVAL_PBInit( BUTTON_USER, BUTTON_MODE_EXTI );
+}
+
+static void vStartTasks( void )
+{
+    UBaseType_t uxUARTPriority = tskIDLE_PRIORITY + 1UL;
+    UBaseType_t uxI2CPriority = tskIDLE_PRIORITY + 2UL;
+    UBaseType_t uxSPIPriority = tskIDLE_PRIORITY + 3UL;
+    const StackType_t uxStackDepth = configMINIMAL_STACK_SIZE;
+
+    xTaskCreate( vReadUARTTask, "UARTx", uxStackDepth, NULL, uxUARTPriority, ( TaskHandle_t * ) NULL );
+    xTaskCreate( vReadI2CTask, "I2Cx", uxStackDepth, NULL, uxI2CPriority, ( TaskHandle_t * ) NULL );
+    xTaskCreate( vWriteSPITask, "SPIx", uxStackDepth, NULL, uxSPIPriority, ( TaskHandle_t * ) NULL );
+}
+
+static void vReadUARTTask( void * pvParameters )
+{
+    /* Queue a message for printing to say the task has started. */
+    // vPrintDisplayMessage( &pcTaskStartMsg );
+
+    for( ; ; )
+    {
+    }
+}
+
+static void vReadI2CTask( void * pvParameters )
+{
+    /* Queue a message for printing to say the task has started. */
+    // vPrintDisplayMessage( &pcTaskStartMsg );
+
+    for( ; ; )
+    {
+    }
+}
+
+static void vWriteSPITask( void * pvParameters )
+{
+    /* Queue a message for printing to say the task has started. */
+    // vPrintDisplayMessage( &pcTaskStartMsg );
+
+    for( ; ; )
+    {
+    }
 }
