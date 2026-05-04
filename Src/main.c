@@ -22,6 +22,8 @@
 #include "portmacro.h"
 #include "task.h"
 
+#include "stm32l4xx_hal.h"
+
 static void prvSetupHardware( void );
 static void vStartTasks( void );
 
@@ -42,8 +44,7 @@ int main(void)
 
 static void prvSetupHardware( void )
 {
-    /* Setup STM32 system (clock, PLL and Flash configuration) */
-    // SystemInit();
+    HAL_Init();
 
     /* Ensure all priority bits are assigned as preemption priority bits. */
     // NVIC_PriorityGroupConfig( NVIC_PriorityGroup_4 );

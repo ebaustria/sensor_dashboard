@@ -1,3 +1,6 @@
 [submodule "lib/FreeRTOS-Kernel"]
 	path = lib/FreeRTOS-Kernel
 	url = https://github.com/FreeRTOS/FreeRTOS-Kernel.git
+[submodule "lib/stm32l4xx-hal-driver"]
+	path = lib/stm32l4xx-hal-driver
+	url = git@github.com:STMicroelectronics/stm32l4xx-hal-driver.git

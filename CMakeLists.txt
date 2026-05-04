@@ -33,6 +33,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
 set(FREERTOS_DIR "lib/FreeRTOS-Kernel")
+set(HAL_DIR "lib/stm32l4xx-hal-driver")
 set(CMSIS_DIR "lib/CMSIS")
 set(CMSIS_CORE_DIR "${CMSIS_DIR}/Core")
 set(CMSIS_DEVICE_DIR "${CMSIS_DIR}/Device/ST/STM32L4xx")
@@ -54,6 +55,7 @@ set(include_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}/Inc
     "${FREERTOS_DIR}/include"
     "${FREERTOS_DIR}/portable/GCC/ARM_CM4F"
+    "${HAL_DIR}/Inc"
     "${CMSIS_CORE_DIR}/Include"
     "${CMSIS_DEVICE_DIR}/Include"
 )
@@ -113,6 +115,8 @@ target_sources(${CMAKE_PROJECT_NAME}
     "${FREERTOS_DIR}/portable/GCC/ARM_CM4F/port.c"
 
     "${CMSIS_DEVICE_DIR}/Source/Templates/system_stm32l4xx.c"
+    "${HAL_DIR}/Src/stm32l4xx_hal.c"
+    "${HAL_DIR}/Src/stm32l4xx_hal_cortex.c"
 )
 
 # Add include paths
