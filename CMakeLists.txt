@@ -117,6 +117,8 @@ target_sources(${CMAKE_PROJECT_NAME}
     "${CMSIS_DEVICE_DIR}/Source/Templates/system_stm32l4xx.c"
     "${HAL_DIR}/Src/stm32l4xx_hal.c"
     "${HAL_DIR}/Src/stm32l4xx_hal_cortex.c"
+    "${HAL_DIR}/Src/stm32l4xx_hal_rcc.c"
+    "${HAL_DIR}/Src/stm32l4xx_hal_pwr_ex.c"
 )
 
 # Add include paths
