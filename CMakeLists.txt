@@ -48,6 +48,10 @@ set(cpu_PARAMS
 # Sources
 set(sources_SRCS
 	${CMAKE_CURRENT_SOURCE_DIR}/Src/main.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Src/stm32l4xx_hal_msp.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Src/stm32l4xx_it.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Src/system_stm32l4xx.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Src/stm32l4xx_hal_timebase_tim.c
 )
 
 # Include directories for all compilers
@@ -114,7 +118,6 @@ target_sources(${CMAKE_PROJECT_NAME}
 
     "${FREERTOS_DIR}/portable/GCC/ARM_CM4F/port.c"
 
-    "${CMSIS_DEVICE_DIR}/Source/Templates/system_stm32l4xx.c"
     "${HAL_DIR}/Src/stm32l4xx_hal.c"
     "${HAL_DIR}/Src/stm32l4xx_hal_i2c.c"
     "${HAL_DIR}/Src/stm32l4xx_hal_i2c_ex.c"
@@ -123,7 +126,12 @@ target_sources(${CMAKE_PROJECT_NAME}
     "${HAL_DIR}/Src/stm32l4xx_hal_uart.c"
     "${HAL_DIR}/Src/stm32l4xx_hal_cortex.c"
     "${HAL_DIR}/Src/stm32l4xx_hal_rcc.c"
+    "${HAL_DIR}/Src/stm32l4xx_hal_rcc_ex.c"
     "${HAL_DIR}/Src/stm32l4xx_hal_pwr_ex.c"
+    "${HAL_DIR}/Src/stm32l4xx_hal_uart_ex.c"
+
+    "${HAL_DIR}/Src/stm32l4xx_hal_tim.c"
+    "${HAL_DIR}/Src/stm32l4xx_hal_dma.c"
 )
 
 # Add include paths
