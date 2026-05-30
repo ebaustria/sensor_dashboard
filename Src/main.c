@@ -23,6 +23,16 @@
 #include "FreeRTOS.h"
 #include "portmacro.h"
 #include "task.h"
+#include "queue.h"
+#include "semphr.h"
+
+typedef struct {
+    uint16_t us_length;
+    char message[64];
+} LogMessage_t;
+
+QueueHandle_t x_log_queue;
+SemaphoreHandle_t x_dma_tx_complete_semaphore;
 
 I2C_HandleTypeDef hi2c1;
 
@@ -32,6 +42,7 @@ UART_HandleTypeDef huart4;
 UART_HandleTypeDef huart2;
 DMA_HandleTypeDef hdma_usart2_tx;
 
+static void prvSetupLogging( void );
 static void prvSetupHardware( void );
 static void vStartTasks( void );
 static void SystemClock_Config( void );
@@ -39,6 +50,7 @@ static void SystemClock_Config( void );
 static void vReadUARTTask( void * pvParameters );
 static void vReadI2CTask( void * pvParameters );
 static void vWriteSPITask( void * pvParameters );
+static void vLoggerTask( void * pvParameters );
 
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
@@ -50,6 +62,7 @@ static void MX_UART4_Init(void);
 
 int main(void)
 {
+    prvSetupLogging();
     prvSetupHardware();
 
     vStartTasks();
@@ -57,6 +70,12 @@ int main(void)
     vTaskStartScheduler();
 
 	for(;;){}
+}
+
+void prvSetupLogging( void )
+{
+    x_log_queue = xQueueCreate( 10, sizeof( LogMessage_t ) );
+    x_dma_tx_complete_semaphore = xSemaphoreCreateBinary();
 }
 
 static void prvSetupHardware( void )
@@ -381,11 +400,13 @@ static void vStartTasks( void )
     UBaseType_t uxUARTPriority = tskIDLE_PRIORITY + 1UL;
     UBaseType_t uxI2CPriority = tskIDLE_PRIORITY + 2UL;
     UBaseType_t uxSPIPriority = tskIDLE_PRIORITY + 3UL;
+    UBaseType_t uxLogPriority = tskIDLE_PRIORITY + 4UL;
     const StackType_t uxStackDepth = configMINIMAL_STACK_SIZE;
 
     xTaskCreate( vReadUARTTask, "UARTx", uxStackDepth, NULL, uxUARTPriority, ( TaskHandle_t * ) NULL );
     xTaskCreate( vReadI2CTask, "I2Cx", uxStackDepth, NULL, uxI2CPriority, ( TaskHandle_t * ) NULL );
     xTaskCreate( vWriteSPITask, "SPIx", uxStackDepth, NULL, uxSPIPriority, ( TaskHandle_t * ) NULL );
+    xTaskCreate( vLoggerTask, "Logx", uxStackDepth, NULL, uxLogPriority, ( TaskHandle_t * ) NULL );
 }
 
 static void vReadUARTTask( void * pvParameters )
@@ -415,6 +436,34 @@ static void vWriteSPITask( void * pvParameters )
 
     for( ; ; )
     {
+    }
+}
+
+void vLoggerTask( void *pvParameters )
+{
+    LogMessage_t x_received_msg;
+
+    for( ;; )
+    {
+        if( xQueueReceive( x_log_queue, &x_received_msg, portMAX_DELAY ) == pdPASS )
+        {
+            HAL_UART_Transmit_DMA( &huart2, 
+                                   (uint8_t*)x_received_msg.message, 
+                                   x_received_msg.us_length );
+
+            xSemaphoreTake( x_dma_tx_complete_semaphore, portMAX_DELAY );
+        }
+    }
+}
+
+void HAL_UART_TxCpltCallback( UART_HandleTypeDef *huart )
+{
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
+    if( huart->Instance == USART2 )
+    {
+        xSemaphoreGiveFromISR( x_dma_tx_complete_semaphore, &xHigherPriorityTaskWoken );
+        portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
     }
 }
 
