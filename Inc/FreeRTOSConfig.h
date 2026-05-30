@@ -25,6 +25,20 @@
 #define configUSE_16_BIT_TICKS 0
 
 #define configMAX_PRIORITIES 5
-#define configMAX_SYSCALL_INTERRUPT_PRIORITY 0
+
+#ifdef __NVIC_PRIO_BITS
+    #define configPRIO_BITS __NVIC_PRIO_BITS
+#else
+    #define configPRIO_BITS 4
+#endif
+
+#define configLIBRARY_LOWEST_INTERRUPT_PRIORITY      15
+#define configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY 5
+
+#define configKERNEL_INTERRUPT_PRIORITY \
+        ( configLIBRARY_LOWEST_INTERRUPT_PRIORITY << (8 - configPRIO_BITS) )
+
+#define configMAX_SYSCALL_INTERRUPT_PRIORITY \
+        ( configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY << (8 - configPRIO_BITS) )
 
 #endif /* FREERTOS_CONFIG_H */

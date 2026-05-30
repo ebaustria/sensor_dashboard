@@ -398,15 +398,14 @@ void Error_Handler(void)
 static void vStartTasks( void )
 {
     UBaseType_t uxLogPriority = tskIDLE_PRIORITY + 1UL;
-    UBaseType_t uxUARTPriority = tskIDLE_PRIORITY + 2UL;
+    UBaseType_t uxSPIPriority = tskIDLE_PRIORITY + 2UL;
     UBaseType_t uxI2CPriority = tskIDLE_PRIORITY + 3UL;
-    UBaseType_t uxSPIPriority = tskIDLE_PRIORITY + 4UL;
-    const StackType_t uxStackDepth = configMINIMAL_STACK_SIZE;
+    UBaseType_t uxUARTPriority = tskIDLE_PRIORITY + 4UL;
 
-    xTaskCreate( vReadUARTTask, "UARTx", uxStackDepth, NULL, uxUARTPriority, ( TaskHandle_t * ) NULL );
-    xTaskCreate( vReadI2CTask, "I2Cx", uxStackDepth, NULL, uxI2CPriority, ( TaskHandle_t * ) NULL );
-    xTaskCreate( vWriteSPITask, "SPIx", uxStackDepth, NULL, uxSPIPriority, ( TaskHandle_t * ) NULL );
-    xTaskCreate( vLoggerTask, "Logx", uxStackDepth, NULL, uxLogPriority, ( TaskHandle_t * ) NULL );
+    xTaskCreate( vLoggerTask, "Logx", 512U, NULL, uxLogPriority, ( TaskHandle_t * ) NULL );
+    xTaskCreate( vWriteSPITask, "SPIx", 512U, NULL, uxSPIPriority, ( TaskHandle_t * ) NULL );
+    xTaskCreate( vReadI2CTask, "I2Cx", configMINIMAL_STACK_SIZE, NULL, uxI2CPriority, ( TaskHandle_t * ) NULL );
+    xTaskCreate( vReadUARTTask, "UARTx", 512U, NULL, uxUARTPriority, ( TaskHandle_t * ) NULL );
 }
 
 static void vReadUARTTask( void * pvParameters )
