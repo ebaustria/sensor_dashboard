@@ -397,10 +397,10 @@ void Error_Handler(void)
 
 static void vStartTasks( void )
 {
-    UBaseType_t uxUARTPriority = tskIDLE_PRIORITY + 1UL;
-    UBaseType_t uxI2CPriority = tskIDLE_PRIORITY + 2UL;
-    UBaseType_t uxSPIPriority = tskIDLE_PRIORITY + 3UL;
-    UBaseType_t uxLogPriority = tskIDLE_PRIORITY + 4UL;
+    UBaseType_t uxLogPriority = tskIDLE_PRIORITY + 1UL;
+    UBaseType_t uxUARTPriority = tskIDLE_PRIORITY + 2UL;
+    UBaseType_t uxI2CPriority = tskIDLE_PRIORITY + 3UL;
+    UBaseType_t uxSPIPriority = tskIDLE_PRIORITY + 4UL;
     const StackType_t uxStackDepth = configMINIMAL_STACK_SIZE;
 
     xTaskCreate( vReadUARTTask, "UARTx", uxStackDepth, NULL, uxUARTPriority, ( TaskHandle_t * ) NULL );
