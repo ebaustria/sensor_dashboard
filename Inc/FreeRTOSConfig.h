@@ -25,6 +25,6 @@
 #define configUSE_16_BIT_TICKS 0
 
 #define configMAX_PRIORITIES 5
-#define configMAX_SYSCALL_INTERRUPT_PRIORITY 1
+#define configMAX_SYSCALL_INTERRUPT_PRIORITY 0
 
 #endif /* FREERTOS_CONFIG_H */
