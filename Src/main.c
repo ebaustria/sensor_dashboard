@@ -47,9 +47,9 @@ static void prvSetupHardware( void );
 static void vStartTasks( void );
 static void SystemClock_Config( void );
 
-static void vReadUARTTask( void * pvParameters );
+// static void vReadUARTTask( void * pvParameters );
 static void vReadI2CTask( void * pvParameters );
-static void vWriteSPITask( void * pvParameters );
+// static void vWriteSPITask( void * pvParameters );
 static void vLoggerTask( void * pvParameters );
 
 void SystemClock_Config(void);
@@ -57,8 +57,8 @@ static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_USART2_UART_Init(void);
-static void MX_SPI2_Init(void);
-static void MX_UART4_Init(void);
+// static void MX_SPI2_Init(void);
+// static void MX_UART4_Init(void);
 
 int main(void)
 {
@@ -74,7 +74,7 @@ int main(void)
 
 void prvSetupLogging( void )
 {
-    x_log_queue = xQueueCreate( 10, sizeof( LogMessage_t ) );
+    x_log_queue = xQueueCreate( 16, sizeof( LogMessage_t ) );
     x_dma_tx_complete_semaphore = xSemaphoreCreateBinary();
 }
 
@@ -92,8 +92,8 @@ static void prvSetupHardware( void )
     MX_DMA_Init();
     MX_I2C1_Init();
     MX_USART2_UART_Init();
-    MX_SPI2_Init();
-    MX_UART4_Init();
+    // MX_SPI2_Init();
+    // MX_UART4_Init();
 }
 
 /**
@@ -188,7 +188,8 @@ static void MX_I2C1_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN I2C1_Init 2 */
-
+  LogMessage_t x_log = { 26U, "Finished setting up I2C1\r\n" };
+  xQueueSend(x_log_queue, &x_log, portMAX_DELAY);
   /* USER CODE END I2C1_Init 2 */
 
 }
@@ -198,75 +199,77 @@ static void MX_I2C1_Init(void)
   * @param None
   * @retval None
   */
-static void MX_SPI2_Init(void)
-{
+// static void MX_SPI2_Init(void)
+// {
 
-  /* USER CODE BEGIN SPI2_Init 0 */
+//   /* USER CODE BEGIN SPI2_Init 0 */
 
-  /* USER CODE END SPI2_Init 0 */
+//   /* USER CODE END SPI2_Init 0 */
 
-  /* USER CODE BEGIN SPI2_Init 1 */
+//   /* USER CODE BEGIN SPI2_Init 1 */
 
-  /* USER CODE END SPI2_Init 1 */
-  /* SPI2 parameter configuration*/
-  hspi2.Instance = SPI2;
-  hspi2.Init.Mode = SPI_MODE_MASTER;
-  hspi2.Init.Direction = SPI_DIRECTION_2LINES;
-  hspi2.Init.DataSize = SPI_DATASIZE_4BIT;
-  hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
-  hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
-  hspi2.Init.NSS = SPI_NSS_SOFT;
-  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
-  hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
-  hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
-  hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-  hspi2.Init.CRCPolynomial = 7;
-  hspi2.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
-  hspi2.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
-  if (HAL_SPI_Init(&hspi2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN SPI2_Init 2 */
+//   /* USER CODE END SPI2_Init 1 */
+//   /* SPI2 parameter configuration*/
+//   hspi2.Instance = SPI2;
+//   hspi2.Init.Mode = SPI_MODE_MASTER;
+//   hspi2.Init.Direction = SPI_DIRECTION_2LINES;
+//   hspi2.Init.DataSize = SPI_DATASIZE_4BIT;
+//   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
+//   hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
+//   hspi2.Init.NSS = SPI_NSS_SOFT;
+//   hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+//   hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
+//   hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
+//   hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+//   hspi2.Init.CRCPolynomial = 7;
+//   hspi2.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
+//   hspi2.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
+//   if (HAL_SPI_Init(&hspi2) != HAL_OK)
+//   {
+//     Error_Handler();
+//   }
+//   /* USER CODE BEGIN SPI2_Init 2 */
+//   // LogMessage_t x_log = { 26U, "Finished setting up SPI2\r\n" };
+//   // xQueueSend(x_log_queue, &x_log, portMAX_DELAY);
+//   /* USER CODE END SPI2_Init 2 */
 
-  /* USER CODE END SPI2_Init 2 */
-
-}
+// }
 
 /**
   * @brief UART4 Initialization Function
   * @param None
   * @retval None
   */
-static void MX_UART4_Init(void)
-{
+// static void MX_UART4_Init(void)
+// {
 
-  /* USER CODE BEGIN UART4_Init 0 */
+//   /* USER CODE BEGIN UART4_Init 0 */
 
-  /* USER CODE END UART4_Init 0 */
+//   /* USER CODE END UART4_Init 0 */
 
-  /* USER CODE BEGIN UART4_Init 1 */
+//   /* USER CODE BEGIN UART4_Init 1 */
 
-  /* USER CODE END UART4_Init 1 */
-  huart4.Instance = UART4;
-  huart4.Init.BaudRate = 115200;
-  huart4.Init.WordLength = UART_WORDLENGTH_8B;
-  huart4.Init.StopBits = UART_STOPBITS_1;
-  huart4.Init.Parity = UART_PARITY_NONE;
-  huart4.Init.Mode = UART_MODE_TX_RX;
-  huart4.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart4.Init.OverSampling = UART_OVERSAMPLING_16;
-  huart4.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-  huart4.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-  if (HAL_UART_Init(&huart4) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN UART4_Init 2 */
+//   /* USER CODE END UART4_Init 1 */
+//   huart4.Instance = UART4;
+//   huart4.Init.BaudRate = 115200;
+//   huart4.Init.WordLength = UART_WORDLENGTH_8B;
+//   huart4.Init.StopBits = UART_STOPBITS_1;
+//   huart4.Init.Parity = UART_PARITY_NONE;
+//   huart4.Init.Mode = UART_MODE_TX_RX;
+//   huart4.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+//   huart4.Init.OverSampling = UART_OVERSAMPLING_16;
+//   huart4.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+//   huart4.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+//   if (HAL_UART_Init(&huart4) != HAL_OK)
+//   {
+//     Error_Handler();
+//   }
+//   /* USER CODE BEGIN UART4_Init 2 */
+//   // LogMessage_t x_log = { 27U, "Finished setting up UART4\r\n" };
+//   // xQueueSend(x_log_queue, &x_log, portMAX_DELAY);
+//   /* USER CODE END UART4_Init 2 */
 
-  /* USER CODE END UART4_Init 2 */
-
-}
+// }
 
 /**
   * @brief USART2 Initialization Function
@@ -298,7 +301,8 @@ static void MX_USART2_UART_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN USART2_Init 2 */
-
+  LogMessage_t x_log = { 28U, "Finished setting up USART2\r\n" };
+  xQueueSend(x_log_queue, &x_log, portMAX_DELAY);
   /* USER CODE END USART2_Init 2 */
 
 }
@@ -314,7 +318,7 @@ static void MX_DMA_Init(void)
 
   /* DMA interrupt init */
   /* DMA1_Channel7_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel7_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(DMA1_Channel7_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel7_IRQn);
 
 }
@@ -354,7 +358,8 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
-
+  LogMessage_t x_log = { 26U, "Finished setting up GPIO\r\n" };
+  xQueueSend(x_log_queue, &x_log, portMAX_DELAY);
   /* USER CODE END MX_GPIO_Init_2 */
 }
 
@@ -398,45 +403,54 @@ void Error_Handler(void)
 static void vStartTasks( void )
 {
     UBaseType_t uxLogPriority = tskIDLE_PRIORITY + 1UL;
-    UBaseType_t uxSPIPriority = tskIDLE_PRIORITY + 2UL;
+    // UBaseType_t uxSPIPriority = tskIDLE_PRIORITY + 2UL;
     UBaseType_t uxI2CPriority = tskIDLE_PRIORITY + 3UL;
-    UBaseType_t uxUARTPriority = tskIDLE_PRIORITY + 4UL;
+    // UBaseType_t uxUARTPriority = tskIDLE_PRIORITY + 4UL;
 
     xTaskCreate( vLoggerTask, "Logx", 512U, NULL, uxLogPriority, ( TaskHandle_t * ) NULL );
-    xTaskCreate( vWriteSPITask, "SPIx", 512U, NULL, uxSPIPriority, ( TaskHandle_t * ) NULL );
+    // xTaskCreate( vWriteSPITask, "SPIx", 512U, NULL, uxSPIPriority, ( TaskHandle_t * ) NULL );
     xTaskCreate( vReadI2CTask, "I2Cx", configMINIMAL_STACK_SIZE, NULL, uxI2CPriority, ( TaskHandle_t * ) NULL );
-    xTaskCreate( vReadUARTTask, "UARTx", 512U, NULL, uxUARTPriority, ( TaskHandle_t * ) NULL );
+    // xTaskCreate( vReadUARTTask, "UARTx", 512U, NULL, uxUARTPriority, ( TaskHandle_t * ) NULL );
 }
 
-static void vReadUARTTask( void * pvParameters )
-{
-    /* Queue a message for printing to say the task has started. */
-    // vPrintDisplayMessage( &pcTaskStartMsg );
+// static void vReadUARTTask( void * pvParameters )
+// {
+//     /* Queue a message for printing to say the task has started. */
+//     // vPrintDisplayMessage( &pcTaskStartMsg );
+//     LogMessage_t x_log = { 24U, "Starting vReadUARTTask\r\n" };
+//     xQueueSend(x_log_queue, &x_log, portMAX_DELAY);
 
-    for( ; ; )
-    {
-    }
-}
+//     for( ; ; )
+//     {
+//       ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
+//     }
+// }
 
 static void vReadI2CTask( void * pvParameters )
 {
     /* Queue a message for printing to say the task has started. */
     // vPrintDisplayMessage( &pcTaskStartMsg );
+    LogMessage_t x_log = { 23U, "Starting vReadI2CTask\r\n" };
+    xQueueSend(x_log_queue, &x_log, portMAX_DELAY);
 
     for( ; ; )
     {
+      ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
     }
 }
 
-static void vWriteSPITask( void * pvParameters )
-{
-    /* Queue a message for printing to say the task has started. */
-    // vPrintDisplayMessage( &pcTaskStartMsg );
+// static void vWriteSPITask( void * pvParameters )
+// {
+//     /* Queue a message for printing to say the task has started. */
+//     // vPrintDisplayMessage( &pcTaskStartMsg );
+//     LogMessage_t x_log = { 24U, "Starting vWriteSPITask\r\n" };
+//     xQueueSend(x_log_queue, &x_log, portMAX_DELAY);
 
-    for( ; ; )
-    {
-    }
-}
+//     for( ; ; )
+//     {
+//       ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
+//     }
+// }
 
 void vLoggerTask( void *pvParameters )
 {

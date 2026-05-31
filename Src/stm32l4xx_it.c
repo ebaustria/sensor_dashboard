@@ -31,7 +31,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define TIM6_DAC_IRQHandler TIM6_DACUNDER_IRQHandler
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -204,7 +204,7 @@ void DebugMon_Handler(void)
 /**
   * @brief This function handles DMA1 channel7 global interrupt.
   */
-void DMA1_Channel7_IRQHandler(void)
+void DMA1_CH7_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Channel7_IRQn 0 */
 

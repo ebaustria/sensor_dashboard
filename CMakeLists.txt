@@ -131,6 +131,7 @@ target_sources(${CMAKE_PROJECT_NAME}
     "${HAL_DIR}/Src/stm32l4xx_hal_uart_ex.c"
 
     "${HAL_DIR}/Src/stm32l4xx_hal_tim.c"
+    "${HAL_DIR}/Src/stm32l4xx_hal_tim_ex.c"
     "${HAL_DIR}/Src/stm32l4xx_hal_dma.c"
 )
 
