@@ -25,6 +25,7 @@
 #include "task.h"
 #include "queue.h"
 #include "semphr.h"
+#include "bme280.h"
 
 typedef struct {
     uint16_t us_length;
@@ -94,6 +95,8 @@ static void prvSetupHardware( void )
     MX_USART2_UART_Init();
     // MX_SPI2_Init();
     // MX_UART4_Init();
+
+    configure_bme280();
 }
 
 /**
@@ -428,8 +431,6 @@ static void vStartTasks( void )
 
 static void vReadI2CTask( void * pvParameters )
 {
-    /* Queue a message for printing to say the task has started. */
-    // vPrintDisplayMessage( &pcTaskStartMsg );
     LogMessage_t x_log = { 23U, "Starting vReadI2CTask\r\n" };
     xQueueSend(x_log_queue, &x_log, portMAX_DELAY);
 
