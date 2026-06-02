@@ -1,5 +1,20 @@
 #include "bme280.h"
 #include "stm32l4xx_hal.h"
+#include "logging.h"
+
+bool reset_bme280(void)
+{
+	HAL_StatusTypeDef status;
+	uint8_t data = 0xB6;
+	status = HAL_I2C_Mem_Write(&hi2c1, BME280_ADDR, RESET_REG_ADDR, I2C_MEMADD_SIZE_8BIT, &data, 1, 1000);
+	HAL_Delay(500);
+
+	//Checking for is reset process done
+	uint8_t id;
+	status = HAL_I2C_Mem_Read(&hi2c1, BME280_ADDR, CHIP_ID_REG_ADDR, I2C_MEMADD_SIZE_8BIT, &id, 1, 1000);
+
+	return id == BME280_CHIP_ID;
+}
 
 /**
   * @brief  Puts the BME280 into sleep mode
@@ -22,12 +37,14 @@ HAL_StatusTypeDef sleep_mode_bme280(void)
   *
   * @retval None
   */
-void configure_bme280()
+void configure_bme280(void)
 {
+	HAL_StatusTypeDef hal_status = HAL_ERROR;
 	uint8_t init = 0;
 
 	// Setting it to sleep mode because the config register can only be changed while the BME280 is in sleep mode
-	if (sleep_mode_bme280() == HAL_OK)
+	hal_status = sleep_mode_bme280();
+	if (hal_status == HAL_OK)
 	{
 
 		// printf("BME280 was put into sleep mode so that the config register could be set.!\n");

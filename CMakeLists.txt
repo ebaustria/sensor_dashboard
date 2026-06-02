@@ -48,6 +48,7 @@ set(cpu_PARAMS
 # Sources
 set(sources_SRCS
 	${CMAKE_CURRENT_SOURCE_DIR}/Src/main.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Src/logging.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Src/bme280.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Src/stm32l4xx_hal_msp.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Src/stm32l4xx_it.c

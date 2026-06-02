@@ -22,18 +22,12 @@
 
 #include "FreeRTOS.h"
 #include "portmacro.h"
+#include "stm32l4xx_hal_rcc.h"
 #include "task.h"
 #include "queue.h"
 #include "semphr.h"
 #include "bme280.h"
-
-typedef struct {
-    uint16_t us_length;
-    char message[64];
-} LogMessage_t;
-
-QueueHandle_t x_log_queue;
-SemaphoreHandle_t x_dma_tx_complete_semaphore;
+#include "logging.h"
 
 I2C_HandleTypeDef hi2c1;
 
@@ -96,6 +90,7 @@ static void prvSetupHardware( void )
     // MX_SPI2_Init();
     // MX_UART4_Init();
 
+    reset_bme280();
     configure_bme280();
 }
 
