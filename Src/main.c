@@ -17,6 +17,7 @@
  */
 
 #include <stdint.h>
+#include <string.h>
 
 #include "main.h"
 
@@ -26,12 +27,17 @@
 #include "task.h"
 #include "queue.h"
 #include "semphr.h"
+#include "gps.h"
 #include "bme280.h"
 #include "logging.h"
+
+uint8_t rx_uart_byte;
 
 I2C_HandleTypeDef hi2c1;
 
 SPI_HandleTypeDef hspi2;
+
+QueueHandle_t uart4_queue;
 
 UART_HandleTypeDef huart4;
 UART_HandleTypeDef huart2;
@@ -42,21 +48,22 @@ static void prvSetupHardware( void );
 static void vStartTasks( void );
 static void SystemClock_Config( void );
 
-// static void vReadUARTTask( void * pvParameters );
-static void vReadI2CTask( void * pvParameters );
+static void vParseGPSDataTask( void * pvParameters );
+// static void vReadI2CTask( void * pvParameters );
 // static void vWriteSPITask( void * pvParameters );
 static void vLoggerTask( void * pvParameters );
 
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
-static void MX_I2C1_Init(void);
+// static void MX_I2C1_Init(void);
 static void MX_USART2_UART_Init(void);
 // static void MX_SPI2_Init(void);
-// static void MX_UART4_Init(void);
+static void MX_UART4_Init(void);
 
 int main(void)
 {
+    uart4_queue = xQueueCreate(1024, sizeof(uint8_t));
     prvSetupLogging();
     prvSetupHardware();
 
@@ -85,13 +92,26 @@ static void prvSetupHardware( void )
 
     MX_GPIO_Init();
     MX_DMA_Init();
-    MX_I2C1_Init();
+    // MX_I2C1_Init();
     MX_USART2_UART_Init();
     // MX_SPI2_Init();
-    // MX_UART4_Init();
+    MX_UART4_Init();
 
-    reset_bme280();
-    configure_bme280();
+    HAL_Delay(10);
+    HAL_UART_Receive_IT(&huart4, &rx_uart_byte, 1);
+    HAL_Delay(10);
+
+    send_uart(huart4, PMTK_SET_BAUD_9600);
+    HAL_Delay(10);
+    send_uart(huart4, PMTK_SET_NMEA_OUTPUT_RMCGGA);
+    HAL_Delay(10);
+    send_uart(huart4, PMTK_API_SET_FIX_CTL_5HZ);
+
+    HAL_Delay(10);
+    send_uart(huart4, PGCMD_ANTENNA);
+    HAL_Delay(10);
+    // reset_bme280();
+    // configure_bme280();
 }
 
 /**
@@ -148,49 +168,49 @@ void SystemClock_Config(void)
   * @param None
   * @retval None
   */
-static void MX_I2C1_Init(void)
-{
+// static void MX_I2C1_Init(void)
+// {
 
-  /* USER CODE BEGIN I2C1_Init 0 */
+//   /* USER CODE BEGIN I2C1_Init 0 */
 
-  /* USER CODE END I2C1_Init 0 */
+//   /* USER CODE END I2C1_Init 0 */
 
-  /* USER CODE BEGIN I2C1_Init 1 */
+//   /* USER CODE BEGIN I2C1_Init 1 */
 
-  /* USER CODE END I2C1_Init 1 */
-  hi2c1.Instance = I2C1;
-  hi2c1.Init.Timing = 0x10D19CE4;
-  hi2c1.Init.OwnAddress1 = 0;
-  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
-  hi2c1.Init.OwnAddress2 = 0;
-  hi2c1.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
-  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
-  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
-  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
-  {
-    Error_Handler();
-  }
+//   /* USER CODE END I2C1_Init 1 */
+//   hi2c1.Instance = I2C1;
+//   hi2c1.Init.Timing = 0x10D19CE4;
+//   hi2c1.Init.OwnAddress1 = 0;
+//   hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+//   hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+//   hi2c1.Init.OwnAddress2 = 0;
+//   hi2c1.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
+//   hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+//   hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+//   if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+//   {
+//     Error_Handler();
+//   }
 
-  /** Configure Analogue filter
-  */
-  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
-  {
-    Error_Handler();
-  }
+//   /** Configure Analogue filter
+//   */
+//   if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
+//   {
+//     Error_Handler();
+//   }
 
-  /** Configure Digital filter
-  */
-  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN I2C1_Init 2 */
-  LogMessage_t x_log = { 26U, "Finished setting up I2C1\r\n" };
-  xQueueSend(x_log_queue, &x_log, portMAX_DELAY);
-  /* USER CODE END I2C1_Init 2 */
+//   /** Configure Digital filter
+//   */
+//   if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
+//   {
+//     Error_Handler();
+//   }
+//   /* USER CODE BEGIN I2C1_Init 2 */
+//   LogMessage_t x_log = { 26U, "Finished setting up I2C1\r\n" };
+//   xQueueSend(x_log_queue, &x_log, portMAX_DELAY);
+//   /* USER CODE END I2C1_Init 2 */
 
-}
+// }
 
 /**
   * @brief SPI2 Initialization Function
@@ -238,36 +258,36 @@ static void MX_I2C1_Init(void)
   * @param None
   * @retval None
   */
-// static void MX_UART4_Init(void)
-// {
+static void MX_UART4_Init(void)
+{
 
-//   /* USER CODE BEGIN UART4_Init 0 */
+  /* USER CODE BEGIN UART4_Init 0 */
 
-//   /* USER CODE END UART4_Init 0 */
+  /* USER CODE END UART4_Init 0 */
 
-//   /* USER CODE BEGIN UART4_Init 1 */
+  /* USER CODE BEGIN UART4_Init 1 */
 
-//   /* USER CODE END UART4_Init 1 */
-//   huart4.Instance = UART4;
-//   huart4.Init.BaudRate = 115200;
-//   huart4.Init.WordLength = UART_WORDLENGTH_8B;
-//   huart4.Init.StopBits = UART_STOPBITS_1;
-//   huart4.Init.Parity = UART_PARITY_NONE;
-//   huart4.Init.Mode = UART_MODE_TX_RX;
-//   huart4.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-//   huart4.Init.OverSampling = UART_OVERSAMPLING_16;
-//   huart4.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-//   huart4.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-//   if (HAL_UART_Init(&huart4) != HAL_OK)
-//   {
-//     Error_Handler();
-//   }
-//   /* USER CODE BEGIN UART4_Init 2 */
-//   // LogMessage_t x_log = { 27U, "Finished setting up UART4\r\n" };
-//   // xQueueSend(x_log_queue, &x_log, portMAX_DELAY);
-//   /* USER CODE END UART4_Init 2 */
+  /* USER CODE END UART4_Init 1 */
+  huart4.Instance = UART4;
+  huart4.Init.BaudRate = 9600;
+  huart4.Init.WordLength = UART_WORDLENGTH_8B;
+  huart4.Init.StopBits = UART_STOPBITS_1;
+  huart4.Init.Parity = UART_PARITY_NONE;
+  huart4.Init.Mode = UART_MODE_TX_RX;
+  huart4.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart4.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart4.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart4.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN UART4_Init 2 */
+  LogMessage_t x_log = { 27U, "Finished setting up UART4\r\n" };
+  xQueueSend(x_log_queue, &x_log, portMAX_DELAY);
+  /* USER CODE END UART4_Init 2 */
 
-// }
+}
 
 /**
   * @brief USART2 Initialization Function
@@ -402,20 +422,58 @@ static void vStartTasks( void )
 {
     UBaseType_t uxLogPriority = tskIDLE_PRIORITY + 1UL;
     // UBaseType_t uxSPIPriority = tskIDLE_PRIORITY + 2UL;
-    UBaseType_t uxI2CPriority = tskIDLE_PRIORITY + 3UL;
-    // UBaseType_t uxUARTPriority = tskIDLE_PRIORITY + 4UL;
+    // UBaseType_t uxI2CPriority = tskIDLE_PRIORITY + 3UL;
+    UBaseType_t uxUARTPriority = tskIDLE_PRIORITY + 4UL;
 
     xTaskCreate( vLoggerTask, "Logx", 512U, NULL, uxLogPriority, ( TaskHandle_t * ) NULL );
     // xTaskCreate( vWriteSPITask, "SPIx", 512U, NULL, uxSPIPriority, ( TaskHandle_t * ) NULL );
-    xTaskCreate( vReadI2CTask, "I2Cx", configMINIMAL_STACK_SIZE, NULL, uxI2CPriority, ( TaskHandle_t * ) NULL );
-    // xTaskCreate( vReadUARTTask, "UARTx", 512U, NULL, uxUARTPriority, ( TaskHandle_t * ) NULL );
+    // xTaskCreate( vReadI2CTask, "I2Cx", configMINIMAL_STACK_SIZE, NULL, uxI2CPriority, ( TaskHandle_t * ) NULL );
+    xTaskCreate( vParseGPSDataTask, "UARTx", 512U, NULL, uxUARTPriority, ( TaskHandle_t * ) NULL );
 }
 
-// static void vReadUARTTask( void * pvParameters )
+static void vParseGPSDataTask( void * pvParameters )
+{
+    LogMessage_t x_log = { 24U, "Starting vParseGPSDataTask\r\n" };
+    xQueueSend(x_log_queue, &x_log, portMAX_DELAY);
+
+    uint8_t received_byte;
+    char nmea_buffer[100];
+    uint8_t buffer_index = 0;
+
+    for(;;)
+    {
+      if(xQueueReceive(uart4_queue, &received_byte, portMAX_DELAY) == pdTRUE)
+      {
+        if(buffer_index < sizeof(nmea_buffer) - 1)
+        {
+          nmea_buffer[buffer_index] = (char)received_byte;
+          buffer_index++;
+          
+          if(received_byte == '\n')
+          {
+            nmea_buffer[buffer_index] = '\0';
+            
+            // Just send the data to the serial monitor for now.
+            LogMessage_t x_gps_log;
+            x_gps_log.us_length = buffer_index + 1;
+            strcpy(x_gps_log.message, nmea_buffer);
+            xQueueSend(x_log_queue, &x_gps_log, portMAX_DELAY);
+            
+            // memset(&nmea_buffer[0], 0, sizeof(nmea_buffer));
+            buffer_index = 0;
+          }
+        }
+        else
+        {
+          buffer_index = 0;
+        }
+      }
+    }
+}
+
+// static void vReadI2CTask( void * pvParameters )
 // {
-//     /* Queue a message for printing to say the task has started. */
-//     // vPrintDisplayMessage( &pcTaskStartMsg );
-//     LogMessage_t x_log = { 24U, "Starting vReadUARTTask\r\n" };
+//     LogMessage_t x_log = { 23U, "Starting vReadI2CTask\r\n" };
 //     xQueueSend(x_log_queue, &x_log, portMAX_DELAY);
 
 //     for( ; ; )
@@ -423,17 +481,6 @@ static void vStartTasks( void )
 //       ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
 //     }
 // }
-
-static void vReadI2CTask( void * pvParameters )
-{
-    LogMessage_t x_log = { 23U, "Starting vReadI2CTask\r\n" };
-    xQueueSend(x_log_queue, &x_log, portMAX_DELAY);
-
-    for( ; ; )
-    {
-      ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
-    }
-}
 
 // static void vWriteSPITask( void * pvParameters )
 // {
@@ -463,6 +510,18 @@ void vLoggerTask( void *pvParameters )
             xSemaphoreTake( x_dma_tx_complete_semaphore, portMAX_DELAY );
         }
     }
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
+  if (huart->Instance == UART4)
+  {
+    xQueueSendFromISR(uart4_queue, &rx_uart_byte, &xHigherPriorityTaskWoken);
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+    HAL_UART_Receive_IT(&huart4, &rx_uart_byte, 1);
+  }
 }
 
 void HAL_UART_TxCpltCallback( UART_HandleTypeDef *huart )

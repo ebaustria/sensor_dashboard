@@ -12,7 +12,7 @@ extern "C" {
 
 typedef struct {
     uint16_t us_length;
-    char message[64];
+    char message[100];
 } LogMessage_t;
 
 extern QueueHandle_t x_log_queue;

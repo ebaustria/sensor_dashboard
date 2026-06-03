@@ -37,6 +37,7 @@ set(HAL_DIR "lib/stm32l4xx-hal-driver")
 set(CMSIS_DIR "lib/CMSIS")
 set(CMSIS_CORE_DIR "${CMSIS_DIR}/Core")
 set(CMSIS_DEVICE_DIR "${CMSIS_DIR}/Device/ST/STM32L4xx")
+set(GPS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/GPS")
 
 # Core MCU flags, CPU type, instruction set and FPU setup
 set(cpu_PARAMS 
@@ -64,6 +65,7 @@ set(include_DIRS
     "${HAL_DIR}/Inc"
     "${CMSIS_CORE_DIR}/Include"
     "${CMSIS_DEVICE_DIR}/Include"
+    "${GPS_DIR}"
 )
 
 # Include directories for each compiler
@@ -135,6 +137,8 @@ target_sources(${CMAKE_PROJECT_NAME}
     "${HAL_DIR}/Src/stm32l4xx_hal_tim.c"
     "${HAL_DIR}/Src/stm32l4xx_hal_tim_ex.c"
     "${HAL_DIR}/Src/stm32l4xx_hal_dma.c"
+
+    "${GPS_DIR}/gps.c"
 )
 
 # Add include paths
