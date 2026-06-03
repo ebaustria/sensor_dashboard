@@ -22,14 +22,14 @@
 #include "main.h"
 
 #include "FreeRTOS.h"
+#include "bme280.h"
+#include "gps.h"
+#include "logging.h"
 #include "portmacro.h"
-#include "stm32l4xx_hal_rcc.h"
-#include "task.h"
 #include "queue.h"
 #include "semphr.h"
-#include "gps.h"
-#include "bme280.h"
-#include "logging.h"
+#include "stm32l4xx_hal_rcc.h"
+#include "task.h"
 
 uint8_t rx_uart_byte;
 
@@ -43,15 +43,15 @@ UART_HandleTypeDef huart4;
 UART_HandleTypeDef huart2;
 DMA_HandleTypeDef hdma_usart2_tx;
 
-static void prvSetupLogging( void );
-static void prvSetupHardware( void );
-static void vStartTasks( void );
-static void SystemClock_Config( void );
+static void prvSetupLogging(void);
+static void prvSetupHardware(void);
+static void vStartTasks(void);
+static void SystemClock_Config(void);
 
-static void vParseGPSDataTask( void * pvParameters );
+static void vParseGPSDataTask(void *pvParameters);
 // static void vReadI2CTask( void * pvParameters );
 // static void vWriteSPITask( void * pvParameters );
-static void vLoggerTask( void * pvParameters );
+static void vLoggerTask(void *pvParameters);
 
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
@@ -71,16 +71,18 @@ int main(void)
 
     vTaskStartScheduler();
 
-	for(;;){}
+    for ( ;; )
+    {
+    }
 }
 
-void prvSetupLogging( void )
+void prvSetupLogging(void)
 {
-    x_log_queue = xQueueCreate( 16, sizeof( LogMessage_t ) );
+    x_log_queue = xQueueCreate(16, sizeof(LogMessage_t));
     x_dma_tx_complete_semaphore = xSemaphoreCreateBinary();
 }
 
-static void prvSetupHardware( void )
+static void prvSetupHardware(void)
 {
     HAL_Init();
 
@@ -88,7 +90,7 @@ static void prvSetupHardware( void )
 
     SystemCoreClockUpdate();
 
-    HAL_NVIC_SetPriorityGrouping( NVIC_PRIORITYGROUP_4 );
+    HAL_NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
 
     MX_GPIO_Init();
     MX_DMA_Init();
@@ -115,59 +117,58 @@ static void prvSetupHardware( void )
 }
 
 /**
-  * @brief System Clock Configuration
-  * @retval None
-  */
+ * @brief System Clock Configuration
+ * @retval None
+ */
 void SystemClock_Config(void)
 {
-  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+    RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+    RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-  /** Configure the main internal regulator output voltage
-  */
-  if (HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1) != HAL_OK)
-  {
-    Error_Handler();
-  }
+    /** Configure the main internal regulator output voltage
+     */
+    if ( HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1) != HAL_OK )
+    {
+        Error_Handler();
+    }
 
-  /** Initializes the RCC Oscillators according to the specified parameters
-  * in the RCC_OscInitTypeDef structure.
-  */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 1;
-  RCC_OscInitStruct.PLL.PLLN = 10;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV7;
-  RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
-  RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
-    Error_Handler();
-  }
+    /** Initializes the RCC Oscillators according to the specified parameters
+     * in the RCC_OscInitTypeDef structure.
+     */
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+    RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+    RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+    RCC_OscInitStruct.PLL.PLLM = 1;
+    RCC_OscInitStruct.PLL.PLLN = 10;
+    RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV7;
+    RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
+    RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
+    if ( HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK )
+    {
+        Error_Handler();
+    }
 
-  /** Initializes the CPU, AHB and APB buses clocks
-  */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+    /** Initializes the CPU, AHB and APB buses clocks
+     */
+    RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+    RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+    RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+    RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK)
-  {
-    Error_Handler();
-  }
+    if ( HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK )
+    {
+        Error_Handler();
+    }
 }
 
 /**
-  * @brief I2C1 Initialization Function
-  * @param None
-  * @retval None
-  */
+ * @brief I2C1 Initialization Function
+ * @param None
+ * @retval None
+ */
 // static void MX_I2C1_Init(void)
 // {
 
@@ -213,10 +214,10 @@ void SystemClock_Config(void)
 // }
 
 /**
-  * @brief SPI2 Initialization Function
-  * @param None
-  * @retval None
-  */
+ * @brief SPI2 Initialization Function
+ * @param None
+ * @retval None
+ */
 // static void MX_SPI2_Init(void)
 // {
 
@@ -254,220 +255,217 @@ void SystemClock_Config(void)
 // }
 
 /**
-  * @brief UART4 Initialization Function
-  * @param None
-  * @retval None
-  */
+ * @brief UART4 Initialization Function
+ * @param None
+ * @retval None
+ */
 static void MX_UART4_Init(void)
 {
 
-  /* USER CODE BEGIN UART4_Init 0 */
+    /* USER CODE BEGIN UART4_Init 0 */
 
-  /* USER CODE END UART4_Init 0 */
+    /* USER CODE END UART4_Init 0 */
 
-  /* USER CODE BEGIN UART4_Init 1 */
+    /* USER CODE BEGIN UART4_Init 1 */
 
-  /* USER CODE END UART4_Init 1 */
-  huart4.Instance = UART4;
-  huart4.Init.BaudRate = 9600;
-  huart4.Init.WordLength = UART_WORDLENGTH_8B;
-  huart4.Init.StopBits = UART_STOPBITS_1;
-  huart4.Init.Parity = UART_PARITY_NONE;
-  huart4.Init.Mode = UART_MODE_TX_RX;
-  huart4.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart4.Init.OverSampling = UART_OVERSAMPLING_16;
-  huart4.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-  huart4.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-  if (HAL_UART_Init(&huart4) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN UART4_Init 2 */
-  LogMessage_t x_log = { 27U, "Finished setting up UART4\r\n" };
-  xQueueSend(x_log_queue, &x_log, portMAX_DELAY);
-  /* USER CODE END UART4_Init 2 */
-
+    /* USER CODE END UART4_Init 1 */
+    huart4.Instance = UART4;
+    huart4.Init.BaudRate = 9600;
+    huart4.Init.WordLength = UART_WORDLENGTH_8B;
+    huart4.Init.StopBits = UART_STOPBITS_1;
+    huart4.Init.Parity = UART_PARITY_NONE;
+    huart4.Init.Mode = UART_MODE_TX_RX;
+    huart4.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+    huart4.Init.OverSampling = UART_OVERSAMPLING_16;
+    huart4.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+    huart4.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+    if ( HAL_UART_Init(&huart4) != HAL_OK )
+    {
+        Error_Handler();
+    }
+    /* USER CODE BEGIN UART4_Init 2 */
+    LogMessage_t x_log = {27U, "Finished setting up UART4\r\n"};
+    xQueueSend(x_log_queue, &x_log, portMAX_DELAY);
+    /* USER CODE END UART4_Init 2 */
 }
 
 /**
-  * @brief USART2 Initialization Function
-  * @param None
-  * @retval None
-  */
+ * @brief USART2 Initialization Function
+ * @param None
+ * @retval None
+ */
 static void MX_USART2_UART_Init(void)
 {
 
-  /* USER CODE BEGIN USART2_Init 0 */
+    /* USER CODE BEGIN USART2_Init 0 */
 
-  /* USER CODE END USART2_Init 0 */
+    /* USER CODE END USART2_Init 0 */
 
-  /* USER CODE BEGIN USART2_Init 1 */
+    /* USER CODE BEGIN USART2_Init 1 */
 
-  /* USER CODE END USART2_Init 1 */
-  huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
-  huart2.Init.WordLength = UART_WORDLENGTH_8B;
-  huart2.Init.StopBits = UART_STOPBITS_1;
-  huart2.Init.Parity = UART_PARITY_NONE;
-  huart2.Init.Mode = UART_MODE_TX_RX;
-  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
-  huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-  huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-  if (HAL_UART_Init(&huart2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN USART2_Init 2 */
-  LogMessage_t x_log = { 28U, "Finished setting up USART2\r\n" };
-  xQueueSend(x_log_queue, &x_log, portMAX_DELAY);
-  /* USER CODE END USART2_Init 2 */
-
+    /* USER CODE END USART2_Init 1 */
+    huart2.Instance = USART2;
+    huart2.Init.BaudRate = 115200;
+    huart2.Init.WordLength = UART_WORDLENGTH_8B;
+    huart2.Init.StopBits = UART_STOPBITS_1;
+    huart2.Init.Parity = UART_PARITY_NONE;
+    huart2.Init.Mode = UART_MODE_TX_RX;
+    huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+    huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+    huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+    huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+    if ( HAL_UART_Init(&huart2) != HAL_OK )
+    {
+        Error_Handler();
+    }
+    /* USER CODE BEGIN USART2_Init 2 */
+    LogMessage_t x_log = {28U, "Finished setting up USART2\r\n"};
+    xQueueSend(x_log_queue, &x_log, portMAX_DELAY);
+    /* USER CODE END USART2_Init 2 */
 }
 
 /**
-  * Enable DMA controller clock
-  */
+ * Enable DMA controller clock
+ */
 static void MX_DMA_Init(void)
 {
 
-  /* DMA controller clock enable */
-  __HAL_RCC_DMA1_CLK_ENABLE();
+    /* DMA controller clock enable */
+    __HAL_RCC_DMA1_CLK_ENABLE();
 
-  /* DMA interrupt init */
-  /* DMA1_Channel7_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel7_IRQn, 5, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Channel7_IRQn);
-
+    /* DMA interrupt init */
+    /* DMA1_Channel7_IRQn interrupt configuration */
+    HAL_NVIC_SetPriority(DMA1_Channel7_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(DMA1_Channel7_IRQn);
 }
 
 /**
-  * @brief GPIO Initialization Function
-  * @param None
-  * @retval None
-  */
+ * @brief GPIO Initialization Function
+ * @param None
+ * @retval None
+ */
 static void MX_GPIO_Init(void)
 {
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-  /* USER CODE BEGIN MX_GPIO_Init_1 */
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
+    /* USER CODE BEGIN MX_GPIO_Init_1 */
 
-  /* USER CODE END MX_GPIO_Init_1 */
+    /* USER CODE END MX_GPIO_Init_1 */
 
-  /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOC_CLK_ENABLE();
-  __HAL_RCC_GPIOH_CLK_ENABLE();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
+    /* GPIO Ports Clock Enable */
+    __HAL_RCC_GPIOC_CLK_ENABLE();
+    __HAL_RCC_GPIOH_CLK_ENABLE();
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+    __HAL_RCC_GPIOB_CLK_ENABLE();
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+    /*Configure GPIO pin Output Level */
+    HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : B1_Pin */
-  GPIO_InitStruct.Pin = B1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
+    /*Configure GPIO pin : B1_Pin */
+    GPIO_InitStruct.Pin = B1_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : LD2_Pin */
-  GPIO_InitStruct.Pin = LD2_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
+    /*Configure GPIO pin : LD2_Pin */
+    GPIO_InitStruct.Pin = LD2_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
 
-  /* USER CODE BEGIN MX_GPIO_Init_2 */
-  LogMessage_t x_log = { 26U, "Finished setting up GPIO\r\n" };
-  xQueueSend(x_log_queue, &x_log, portMAX_DELAY);
-  /* USER CODE END MX_GPIO_Init_2 */
+    /* USER CODE BEGIN MX_GPIO_Init_2 */
+    LogMessage_t x_log = {26U, "Finished setting up GPIO\r\n"};
+    xQueueSend(x_log_queue, &x_log, portMAX_DELAY);
+    /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /**
-  * @brief  Period elapsed callback in non blocking mode
-  * @note   This function is called  when TIM6 interrupt took place, inside
-  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
-  * a global variable "uwTick" used as application time base.
-  * @param  htim : TIM handle
-  * @retval None
-  */
+ * @brief  Period elapsed callback in non blocking mode
+ * @note   This function is called  when TIM6 interrupt took place, inside
+ * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+ * a global variable "uwTick" used as application time base.
+ * @param  htim : TIM handle
+ * @retval None
+ */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-  /* USER CODE BEGIN Callback 0 */
+    /* USER CODE BEGIN Callback 0 */
 
-  /* USER CODE END Callback 0 */
-  if (htim->Instance == TIM6)
-  {
-    HAL_IncTick();
-  }
-  /* USER CODE BEGIN Callback 1 */
+    /* USER CODE END Callback 0 */
+    if ( htim->Instance == TIM6 )
+    {
+        HAL_IncTick();
+    }
+    /* USER CODE BEGIN Callback 1 */
 
-  /* USER CODE END Callback 1 */
+    /* USER CODE END Callback 1 */
 }
 
 /**
-  * @brief  This function is executed in case of error occurrence.
-  * @retval None
-  */
+ * @brief  This function is executed in case of error occurrence.
+ * @retval None
+ */
 void Error_Handler(void)
 {
-  /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
-  while (1)
-  {
-  }
-  /* USER CODE END Error_Handler_Debug */
+    /* USER CODE BEGIN Error_Handler_Debug */
+    /* User can add his own implementation to report the HAL error return state */
+    __disable_irq();
+    while ( 1 )
+    {
+    }
+    /* USER CODE END Error_Handler_Debug */
 }
 
-static void vStartTasks( void )
+static void vStartTasks(void)
 {
     UBaseType_t uxLogPriority = tskIDLE_PRIORITY + 1UL;
     // UBaseType_t uxSPIPriority = tskIDLE_PRIORITY + 2UL;
     // UBaseType_t uxI2CPriority = tskIDLE_PRIORITY + 3UL;
     UBaseType_t uxUARTPriority = tskIDLE_PRIORITY + 4UL;
 
-    xTaskCreate( vLoggerTask, "Logx", 512U, NULL, uxLogPriority, ( TaskHandle_t * ) NULL );
+    xTaskCreate(vLoggerTask, "Logx", 512U, NULL, uxLogPriority, (TaskHandle_t *)NULL);
     // xTaskCreate( vWriteSPITask, "SPIx", 512U, NULL, uxSPIPriority, ( TaskHandle_t * ) NULL );
     // xTaskCreate( vReadI2CTask, "I2Cx", configMINIMAL_STACK_SIZE, NULL, uxI2CPriority, ( TaskHandle_t * ) NULL );
-    xTaskCreate( vParseGPSDataTask, "UARTx", 512U, NULL, uxUARTPriority, ( TaskHandle_t * ) NULL );
+    xTaskCreate(vParseGPSDataTask, "UARTx", 512U, NULL, uxUARTPriority, (TaskHandle_t *)NULL);
 }
 
-static void vParseGPSDataTask( void * pvParameters )
+static void vParseGPSDataTask(void *pvParameters)
 {
-    LogMessage_t x_log = { 24U, "Starting vParseGPSDataTask\r\n" };
+    LogMessage_t x_log = {24U, "Starting vParseGPSDataTask\r\n"};
     xQueueSend(x_log_queue, &x_log, portMAX_DELAY);
 
     uint8_t received_byte;
     char nmea_buffer[100];
     uint8_t buffer_index = 0;
 
-    for(;;)
+    for ( ;; )
     {
-      if(xQueueReceive(uart4_queue, &received_byte, portMAX_DELAY) == pdTRUE)
-      {
-        if(buffer_index < sizeof(nmea_buffer) - 1)
+        if ( xQueueReceive(uart4_queue, &received_byte, portMAX_DELAY) == pdTRUE )
         {
-          nmea_buffer[buffer_index] = (char)received_byte;
-          buffer_index++;
-          
-          if(received_byte == '\n')
-          {
-            nmea_buffer[buffer_index] = '\0';
-            
-            // Just send the data to the serial monitor for now.
-            LogMessage_t x_gps_log;
-            x_gps_log.us_length = buffer_index + 1;
-            strcpy(x_gps_log.message, nmea_buffer);
-            xQueueSend(x_log_queue, &x_gps_log, portMAX_DELAY);
-            
-            // memset(&nmea_buffer[0], 0, sizeof(nmea_buffer));
-            buffer_index = 0;
-          }
+            if ( buffer_index < sizeof(nmea_buffer) - 1 )
+            {
+                nmea_buffer[buffer_index] = (char)received_byte;
+                buffer_index++;
+
+                if ( received_byte == '\n' )
+                {
+                    nmea_buffer[buffer_index] = '\0';
+
+                    // Just send the data to the serial monitor for now.
+                    LogMessage_t x_gps_log;
+                    x_gps_log.us_length = buffer_index + 1;
+                    strcpy(x_gps_log.message, nmea_buffer);
+                    xQueueSend(x_log_queue, &x_gps_log, portMAX_DELAY);
+
+                    // memset(&nmea_buffer[0], 0, sizeof(nmea_buffer));
+                    buffer_index = 0;
+                }
+            }
+            else
+            {
+                buffer_index = 0;
+            }
         }
-        else
-        {
-          buffer_index = 0;
-        }
-      }
     }
 }
 
@@ -495,47 +493,45 @@ static void vParseGPSDataTask( void * pvParameters )
 //     }
 // }
 
-void vLoggerTask( void *pvParameters )
+void vLoggerTask(void *pvParameters)
 {
     LogMessage_t x_received_msg;
 
-    for( ;; )
+    for ( ;; )
     {
-        if( xQueueReceive( x_log_queue, &x_received_msg, portMAX_DELAY ) == pdPASS )
+        if ( xQueueReceive(x_log_queue, &x_received_msg, portMAX_DELAY) == pdPASS )
         {
-            HAL_UART_Transmit_DMA( &huart2, 
-                                   (uint8_t*)x_received_msg.message, 
-                                   x_received_msg.us_length );
+            HAL_UART_Transmit_DMA(&huart2, (uint8_t *)x_received_msg.message, x_received_msg.us_length);
 
-            xSemaphoreTake( x_dma_tx_complete_semaphore, portMAX_DELAY );
+            xSemaphoreTake(x_dma_tx_complete_semaphore, portMAX_DELAY);
         }
     }
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-
-  if (huart->Instance == UART4)
-  {
-    xQueueSendFromISR(uart4_queue, &rx_uart_byte, &xHigherPriorityTaskWoken);
-    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-    HAL_UART_Receive_IT(&huart4, &rx_uart_byte, 1);
-  }
-}
-
-void HAL_UART_TxCpltCallback( UART_HandleTypeDef *huart )
-{
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
-    if( huart->Instance == USART2 )
+    if ( huart->Instance == UART4 )
     {
-        xSemaphoreGiveFromISR( x_dma_tx_complete_semaphore, &xHigherPriorityTaskWoken );
-        portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+        xQueueSendFromISR(uart4_queue, &rx_uart_byte, &xHigherPriorityTaskWoken);
+        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+        HAL_UART_Receive_IT(&huart4, &rx_uart_byte, 1);
     }
 }
 
-void vApplicationIdleHook( void )
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
+    if ( huart->Instance == USART2 )
+    {
+        xSemaphoreGiveFromISR(x_dma_tx_complete_semaphore, &xHigherPriorityTaskWoken);
+        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+    }
+}
+
+void vApplicationIdleHook(void)
 {
     /* vApplicationIdleHook() will only be called if configUSE_IDLE_HOOK is set
      * to 1 in FreeRTOSConfig.h.  It will be called on each iteration of the idle
@@ -549,17 +545,17 @@ void vApplicationIdleHook( void )
 }
 #ifdef USE_FULL_ASSERT
 /**
-  * @brief  Reports the name of the source file and the source line number
-  *         where the assert_param error has occurred.
-  * @param  file: pointer to the source file name
-  * @param  line: assert_param error line source number
-  * @retval None
-  */
+ * @brief  Reports the name of the source file and the source line number
+ *         where the assert_param error has occurred.
+ * @param  file: pointer to the source file name
+ * @param  line: assert_param error line source number
+ * @retval None
+ */
 void assert_failed(uint8_t *file, uint32_t line)
 {
-  /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-  /* USER CODE END 6 */
+    /* USER CODE BEGIN 6 */
+    /* User can add his own implementation to report the file name and line number,
+       ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+    /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */

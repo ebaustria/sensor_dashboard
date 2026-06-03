@@ -2,13 +2,14 @@
 #define __GPS_H
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 #include "stm32l4xx_hal_dma.h"
 #include "stm32l4xx_hal_uart.h"
 
-#define PMTK_API_SET_FIX_CTL_5HZ  "$PMTK300,200,0,0,0,0*2F"
+#define PMTK_API_SET_FIX_CTL_5HZ "$PMTK300,200,0,0,0,0*2F"
 
 #define PMTK_SET_BAUD_9600 "$PMTK251,9600*17"
 #define PMTK_SET_NMEA_OUTPUT_RMCGGA "$PMTK314,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*28"
@@ -17,7 +18,7 @@ extern "C" {
 
 #define PGCMD_ANTENNA "$PGCMD,33,1*6C"
 
-void send_uart(UART_HandleTypeDef huart, char *str);
+    void send_uart(UART_HandleTypeDef huart, char *str);
 
 #ifdef __cplusplus
 }
