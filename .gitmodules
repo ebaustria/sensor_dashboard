@@ -4,3 +4,6 @@
 [submodule "lib/stm32l4xx-hal-driver"]
 	path = lib/stm32l4xx-hal-driver
 	url = git@github.com:STMicroelectronics/stm32l4xx-hal-driver.git
+[submodule "lib/minmea"]
+	path = lib/minmea
+	url = https://github.com/kosma/minmea.git
