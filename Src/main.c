@@ -25,6 +25,7 @@
 #include "bme280.h"
 #include "gps.h"
 #include "logging.h"
+#include "minmea.h"
 #include "portmacro.h"
 #include "queue.h"
 #include "semphr.h"
@@ -105,13 +106,13 @@ static void prvSetupHardware(void)
 
     send_uart(huart4, PMTK_SET_BAUD_9600);
     HAL_Delay(10);
-    send_uart(huart4, PMTK_SET_NMEA_OUTPUT_RMCGGA);
+    send_uart(huart4, PMTK_SET_NMEA_OUTPUT_GGA);
     HAL_Delay(10);
     send_uart(huart4, PMTK_API_SET_FIX_CTL_5HZ);
 
     HAL_Delay(10);
     send_uart(huart4, PGCMD_ANTENNA);
-    HAL_Delay(10);
+    HAL_Delay(400);
     // reset_bme280();
     // configure_bme280();
 }
@@ -431,38 +432,42 @@ static void vStartTasks(void)
 
 static void vParseGPSDataTask(void *pvParameters)
 {
-    LogMessage_t x_log = {24U, "Starting vParseGPSDataTask\r\n"};
+    LogMessage_t x_log = {28U, "Starting vParseGPSDataTask\r\n"};
     xQueueSend(x_log_queue, &x_log, portMAX_DELAY);
 
     uint8_t received_byte;
     char nmea_buffer[100];
     uint8_t buffer_index = 0;
+    struct minmea_sentence_gga frame;
 
     for ( ;; )
     {
         if ( xQueueReceive(uart4_queue, &received_byte, portMAX_DELAY) == pdTRUE )
         {
-            if ( buffer_index < sizeof(nmea_buffer) - 1 )
-            {
-                nmea_buffer[buffer_index] = (char)received_byte;
-                buffer_index++;
-
-                if ( received_byte == '\n' )
-                {
-                    nmea_buffer[buffer_index] = '\0';
-
-                    // Just send the data to the serial monitor for now.
-                    LogMessage_t x_gps_log;
-                    x_gps_log.us_length = buffer_index + 1;
-                    strcpy(x_gps_log.message, nmea_buffer);
-                    xQueueSend(x_log_queue, &x_gps_log, portMAX_DELAY);
-
-                    // memset(&nmea_buffer[0], 0, sizeof(nmea_buffer));
-                    buffer_index = 0;
-                }
+            if ( buffer_index == 0 && received_byte != '$' ) {
+                continue; 
             }
-            else
+
+            if ( received_byte == '$' ) {
+                buffer_index = 0;
+            }
+
+            if (buffer_index < sizeof(nmea_buffer) - 1) {
+                nmea_buffer[buffer_index++] = received_byte;
+            }
+
+            if ( received_byte == '\n' )
             {
+                process_nmea_sentence(nmea_buffer, &frame);
+                nmea_buffer[buffer_index] = '\0';
+
+                // Just send the data to the serial monitor for now.
+                LogMessage_t x_gps_log;
+                x_gps_log.us_length = buffer_index + 1;
+                strcpy(x_gps_log.message, nmea_buffer);
+                xQueueSend(x_log_queue, &x_gps_log, portMAX_DELAY);
+
+                // memset(&nmea_buffer[0], 0, sizeof(nmea_buffer));
                 buffer_index = 0;
             }
         }

@@ -38,6 +38,7 @@ set(CMSIS_DIR "lib/CMSIS")
 set(CMSIS_CORE_DIR "${CMSIS_DIR}/Core")
 set(CMSIS_DEVICE_DIR "${CMSIS_DIR}/Device/ST/STM32L4xx")
 set(GPS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/GPS")
+set(MINMEA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/minmea")
 
 # Core MCU flags, CPU type, instruction set and FPU setup
 set(cpu_PARAMS 
@@ -66,6 +67,7 @@ set(include_DIRS
     "${CMSIS_CORE_DIR}/Include"
     "${CMSIS_DEVICE_DIR}/Include"
     "${GPS_DIR}"
+    "${MINMEA_DIR}"
 )
 
 # Include directories for each compiler
@@ -139,6 +141,7 @@ target_sources(${CMAKE_PROJECT_NAME}
     "${HAL_DIR}/Src/stm32l4xx_hal_dma.c"
 
     "${GPS_DIR}/gps.c"
+    "${MINMEA_DIR}/minmea.c"
 )
 
 # Add include paths
@@ -176,6 +179,7 @@ target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE
     -Wextra
     -Wpedantic
     -Wno-unused-parameter
+    -Dtimegm=mktime
     $<$<COMPILE_LANGUAGE:C>: >
     $<$<COMPILE_LANGUAGE:CXX>:
 
