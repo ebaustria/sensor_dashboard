@@ -444,15 +444,18 @@ static void vParseGPSDataTask(void *pvParameters)
     {
         if ( xQueueReceive(uart4_queue, &received_byte, portMAX_DELAY) == pdTRUE )
         {
-            if ( buffer_index == 0 && received_byte != '$' ) {
-                continue; 
+            if ( buffer_index == 0 && received_byte != '$' )
+            {
+                continue;
             }
 
-            if ( received_byte == '$' ) {
+            if ( received_byte == '$' )
+            {
                 buffer_index = 0;
             }
 
-            if (buffer_index < sizeof(nmea_buffer) - 1) {
+            if ( buffer_index < sizeof(nmea_buffer) - 1 )
+            {
                 nmea_buffer[buffer_index++] = received_byte;
             }
 
