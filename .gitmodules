@@ -7,3 +7,6 @@
 [submodule "lib/minmea"]
 	path = lib/minmea
 	url = https://github.com/kosma/minmea.git
+[submodule "lib/u8g2"]
+	path = lib/u8g2
+	url = https://github.com/olikraus/u8g2.git
