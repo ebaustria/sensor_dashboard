@@ -59,10 +59,10 @@ static void vLoggerTask(void *pvParameters);
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
-// static void MX_I2C1_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_UART4_Init(void);
+// static void MX_I2C1_Init(void);
 
 int main(void)
 {
@@ -98,10 +98,10 @@ static void prvSetupHardware(void)
 
     MX_GPIO_Init();
     MX_DMA_Init();
-    // MX_I2C1_Init();
     MX_USART2_UART_Init();
     MX_SPI2_Init();
     MX_UART4_Init();
+    //   MX_I2C1_Init();
 
     HAL_Delay(10);
     HAL_UART_Receive_IT(&huart4, &rx_uart_byte, 1);
@@ -236,11 +236,11 @@ static void MX_SPI2_Init(void)
     hspi2.Instance = SPI2;
     hspi2.Init.Mode = SPI_MODE_MASTER;
     hspi2.Init.Direction = SPI_DIRECTION_2LINES;
-    hspi2.Init.DataSize = SPI_DATASIZE_4BIT;
+    hspi2.Init.DataSize = SPI_DATASIZE_8BIT;
     hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
     hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
     hspi2.Init.NSS = SPI_NSS_SOFT;
-    hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+    hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
     hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
     hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
     hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -252,7 +252,7 @@ static void MX_SPI2_Init(void)
         Error_Handler();
     }
     /* USER CODE BEGIN SPI2_Init 2 */
-    LogMessage_t x_log = { 26U, "Finished setting up SPI2\r\n" };
+    LogMessage_t x_log = {26U, "Finished setting up SPI2\r\n"};
     xQueueSend(x_log_queue, &x_log, portMAX_DELAY);
     /* USER CODE END SPI2_Init 2 */
 }
@@ -363,6 +363,9 @@ static void MX_GPIO_Init(void)
     /*Configure GPIO pin Output Level */
     HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
 
+    /*Configure GPIO pin Output Level */
+    HAL_GPIO_WritePin(GPIOB, OLED_RST_Pin | OLED_CS_Pin | OLED_DC_Pin, GPIO_PIN_RESET);
+
     /*Configure GPIO pin : B1_Pin */
     GPIO_InitStruct.Pin = B1_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
@@ -375,6 +378,13 @@ static void MX_GPIO_Init(void)
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
+
+    /*Configure GPIO pins : OLED_RST_Pin OLED_CS_Pin OLED_DC_Pin */
+    GPIO_InitStruct.Pin = OLED_RST_Pin | OLED_CS_Pin | OLED_DC_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
     /* USER CODE BEGIN MX_GPIO_Init_2 */
     LogMessage_t x_log = {26U, "Finished setting up GPIO\r\n"};
