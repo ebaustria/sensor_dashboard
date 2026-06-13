@@ -25,6 +25,7 @@
 #include "bme280.h"
 #include "gps.h"
 #include "logging.h"
+#include "message_buffer.h"
 #include "minmea.h"
 #include "portmacro.h"
 #include "queue.h"
@@ -38,20 +39,21 @@ I2C_HandleTypeDef hi2c1;
 
 SPI_HandleTypeDef hspi2;
 
-QueueHandle_t uart4_queue;
+QueueHandle_t x_uart4_queue;
+QueueHandle_t x_gps_oled_queue;
 
 UART_HandleTypeDef huart4;
 UART_HandleTypeDef huart2;
 DMA_HandleTypeDef hdma_usart2_tx;
 
-static void prvSetupLogging(void);
+static void prvSetupQueues(void);
 static void prvSetupHardware(void);
 static void vStartTasks(void);
 static void SystemClock_Config(void);
 
 static void vParseGPSDataTask(void *pvParameters);
 // static void vReadI2CTask( void * pvParameters );
-// static void vWriteSPITask( void * pvParameters );
+static void vUpdateOLEDTask(void *pvParameters);
 static void vLoggerTask(void *pvParameters);
 
 void SystemClock_Config(void);
@@ -59,13 +61,12 @@ static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 // static void MX_I2C1_Init(void);
 static void MX_USART2_UART_Init(void);
-// static void MX_SPI2_Init(void);
+static void MX_SPI2_Init(void);
 static void MX_UART4_Init(void);
 
 int main(void)
 {
-    uart4_queue = xQueueCreate(1024, sizeof(uint8_t));
-    prvSetupLogging();
+    prvSetupQueues();
     prvSetupHardware();
 
     vStartTasks();
@@ -77,8 +78,10 @@ int main(void)
     }
 }
 
-void prvSetupLogging(void)
+void prvSetupQueues(void)
 {
+    x_gps_oled_queue = xQueueCreate(64, sizeof(struct minmea_sentence_gga));
+    x_uart4_queue = xQueueCreate(1024, sizeof(uint8_t));
     x_log_queue = xQueueCreate(16, sizeof(LogMessage_t));
     x_dma_tx_complete_semaphore = xSemaphoreCreateBinary();
 }
@@ -97,7 +100,7 @@ static void prvSetupHardware(void)
     MX_DMA_Init();
     // MX_I2C1_Init();
     MX_USART2_UART_Init();
-    // MX_SPI2_Init();
+    MX_SPI2_Init();
     MX_UART4_Init();
 
     HAL_Delay(10);
@@ -219,41 +222,40 @@ void SystemClock_Config(void)
  * @param None
  * @retval None
  */
-// static void MX_SPI2_Init(void)
-// {
+static void MX_SPI2_Init(void)
+{
 
-//   /* USER CODE BEGIN SPI2_Init 0 */
+    /* USER CODE BEGIN SPI2_Init 0 */
 
-//   /* USER CODE END SPI2_Init 0 */
+    /* USER CODE END SPI2_Init 0 */
 
-//   /* USER CODE BEGIN SPI2_Init 1 */
+    /* USER CODE BEGIN SPI2_Init 1 */
 
-//   /* USER CODE END SPI2_Init 1 */
-//   /* SPI2 parameter configuration*/
-//   hspi2.Instance = SPI2;
-//   hspi2.Init.Mode = SPI_MODE_MASTER;
-//   hspi2.Init.Direction = SPI_DIRECTION_2LINES;
-//   hspi2.Init.DataSize = SPI_DATASIZE_4BIT;
-//   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
-//   hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
-//   hspi2.Init.NSS = SPI_NSS_SOFT;
-//   hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
-//   hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
-//   hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
-//   hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-//   hspi2.Init.CRCPolynomial = 7;
-//   hspi2.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
-//   hspi2.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
-//   if (HAL_SPI_Init(&hspi2) != HAL_OK)
-//   {
-//     Error_Handler();
-//   }
-//   /* USER CODE BEGIN SPI2_Init 2 */
-//   // LogMessage_t x_log = { 26U, "Finished setting up SPI2\r\n" };
-//   // xQueueSend(x_log_queue, &x_log, portMAX_DELAY);
-//   /* USER CODE END SPI2_Init 2 */
-
-// }
+    /* USER CODE END SPI2_Init 1 */
+    /* SPI2 parameter configuration*/
+    hspi2.Instance = SPI2;
+    hspi2.Init.Mode = SPI_MODE_MASTER;
+    hspi2.Init.Direction = SPI_DIRECTION_2LINES;
+    hspi2.Init.DataSize = SPI_DATASIZE_4BIT;
+    hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
+    hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
+    hspi2.Init.NSS = SPI_NSS_SOFT;
+    hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+    hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
+    hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
+    hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+    hspi2.Init.CRCPolynomial = 7;
+    hspi2.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
+    hspi2.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
+    if ( HAL_SPI_Init(&hspi2) != HAL_OK )
+    {
+        Error_Handler();
+    }
+    /* USER CODE BEGIN SPI2_Init 2 */
+    LogMessage_t x_log = { 26U, "Finished setting up SPI2\r\n" };
+    xQueueSend(x_log_queue, &x_log, portMAX_DELAY);
+    /* USER CODE END SPI2_Init 2 */
+}
 
 /**
  * @brief UART4 Initialization Function
@@ -420,12 +422,12 @@ void Error_Handler(void)
 static void vStartTasks(void)
 {
     UBaseType_t uxLogPriority = tskIDLE_PRIORITY + 1UL;
-    // UBaseType_t uxSPIPriority = tskIDLE_PRIORITY + 2UL;
+    UBaseType_t uxSPIPriority = tskIDLE_PRIORITY + 2UL;
     // UBaseType_t uxI2CPriority = tskIDLE_PRIORITY + 3UL;
     UBaseType_t uxUARTPriority = tskIDLE_PRIORITY + 4UL;
 
     xTaskCreate(vLoggerTask, "Logx", 512U, NULL, uxLogPriority, (TaskHandle_t *)NULL);
-    // xTaskCreate( vWriteSPITask, "SPIx", 512U, NULL, uxSPIPriority, ( TaskHandle_t * ) NULL );
+    xTaskCreate(vUpdateOLEDTask, "SPIx", 512U, NULL, uxSPIPriority, (TaskHandle_t *)NULL);
     // xTaskCreate( vReadI2CTask, "I2Cx", configMINIMAL_STACK_SIZE, NULL, uxI2CPriority, ( TaskHandle_t * ) NULL );
     xTaskCreate(vParseGPSDataTask, "UARTx", 512U, NULL, uxUARTPriority, (TaskHandle_t *)NULL);
 }
@@ -438,11 +440,10 @@ static void vParseGPSDataTask(void *pvParameters)
     uint8_t received_byte;
     char nmea_buffer[100];
     uint8_t buffer_index = 0;
-    struct minmea_sentence_gga frame;
 
     for ( ;; )
     {
-        if ( xQueueReceive(uart4_queue, &received_byte, portMAX_DELAY) == pdTRUE )
+        if ( xQueueReceive(x_uart4_queue, &received_byte, portMAX_DELAY) == pdTRUE )
         {
             if ( buffer_index == 0 && received_byte != '$' )
             {
@@ -461,16 +462,12 @@ static void vParseGPSDataTask(void *pvParameters)
 
             if ( received_byte == '\n' )
             {
+                struct minmea_sentence_gga frame;
                 process_nmea_sentence(nmea_buffer, &frame);
                 nmea_buffer[buffer_index] = '\0';
 
-                // Just send the data to the serial monitor for now.
-                LogMessage_t x_gps_log;
-                x_gps_log.us_length = buffer_index + 1;
-                strcpy(x_gps_log.message, nmea_buffer);
-                xQueueSend(x_log_queue, &x_gps_log, portMAX_DELAY);
+                xQueueSend(x_gps_oled_queue, &frame, portMAX_DELAY);
 
-                // memset(&nmea_buffer[0], 0, sizeof(nmea_buffer));
                 buffer_index = 0;
             }
         }
@@ -488,18 +485,22 @@ static void vParseGPSDataTask(void *pvParameters)
 //     }
 // }
 
-// static void vWriteSPITask( void * pvParameters )
-// {
-//     /* Queue a message for printing to say the task has started. */
-//     // vPrintDisplayMessage( &pcTaskStartMsg );
-//     LogMessage_t x_log = { 24U, "Starting vWriteSPITask\r\n" };
-//     xQueueSend(x_log_queue, &x_log, portMAX_DELAY);
+static void vUpdateOLEDTask(void *pvParameters)
+{
+    LogMessage_t x_log = {26U, "Starting vUpdateOLEDTask\r\n"};
+    xQueueSend(x_log_queue, &x_log, portMAX_DELAY);
 
-//     for( ; ; )
-//     {
-//       ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
-//     }
-// }
+    struct minmea_sentence_gga x_received_frame;
+
+    for ( ;; )
+    {
+        if ( xQueueReceive(x_gps_oled_queue, &x_received_frame, portMAX_DELAY) == pdTRUE )
+        {
+            LogMessage_t x_oled_log = {24U, "Received new GPS frame\r\n"};
+            xQueueSend(x_log_queue, &x_oled_log, portMAX_DELAY);
+        }
+    }
+}
 
 void vLoggerTask(void *pvParameters)
 {
@@ -522,7 +523,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
     if ( huart->Instance == UART4 )
     {
-        xQueueSendFromISR(uart4_queue, &rx_uart_byte, &xHigherPriorityTaskWoken);
+        xQueueSendFromISR(x_uart4_queue, &rx_uart_byte, &xHigherPriorityTaskWoken);
         portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
         HAL_UART_Receive_IT(&huart4, &rx_uart_byte, 1);
     }
