@@ -17,6 +17,7 @@
  */
 
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "main.h"
@@ -27,11 +28,13 @@
 #include "logging.h"
 #include "message_buffer.h"
 #include "minmea.h"
+#include "oled.h"
 #include "portmacro.h"
 #include "queue.h"
 #include "semphr.h"
 #include "stm32l4xx_hal_rcc.h"
 #include "task.h"
+#include "u8g2.h"
 
 uint8_t rx_uart_byte;
 
@@ -45,6 +48,8 @@ QueueHandle_t x_gps_oled_queue;
 UART_HandleTypeDef huart4;
 UART_HandleTypeDef huart2;
 DMA_HandleTypeDef hdma_usart2_tx;
+
+u8g2_t u8g2;
 
 static void prvSetupQueues(void);
 static void prvSetupHardware(void);
@@ -502,12 +507,14 @@ static void vUpdateOLEDTask(void *pvParameters)
 
     struct minmea_sentence_gga x_received_frame;
 
+    init_oled();
+
     for ( ;; )
     {
         if ( xQueueReceive(x_gps_oled_queue, &x_received_frame, portMAX_DELAY) == pdTRUE )
         {
-            LogMessage_t x_oled_log = {24U, "Received new GPS frame\r\n"};
-            xQueueSend(x_log_queue, &x_oled_log, portMAX_DELAY);
+            update_oled(&x_received_frame);
+            u8g2_SendBuffer(&u8g2);
         }
     }
 }

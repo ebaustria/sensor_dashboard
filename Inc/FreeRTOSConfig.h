@@ -39,4 +39,6 @@ extern uint32_t SystemCoreClock;
 
 #define configMAX_SYSCALL_INTERRUPT_PRIORITY (configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY << (8 - configPRIO_BITS))
 
+#define INCLUDE_vTaskDelay 1
+
 #endif /* FREERTOS_CONFIG_H */

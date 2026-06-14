@@ -38,7 +38,9 @@ set(CMSIS_DIR "lib/CMSIS")
 set(CMSIS_CORE_DIR "${CMSIS_DIR}/Core")
 set(CMSIS_DEVICE_DIR "${CMSIS_DIR}/Device/ST/STM32L4xx")
 set(GPS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/GPS")
+set(OLED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/OLED")
 set(MINMEA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/minmea")
+set(U8G2_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/u8g2")
 
 # Core MCU flags, CPU type, instruction set and FPU setup
 set(cpu_PARAMS 
@@ -67,7 +69,9 @@ set(include_DIRS
     "${CMSIS_CORE_DIR}/Include"
     "${CMSIS_DEVICE_DIR}/Include"
     "${GPS_DIR}"
+    "${OLED_DIR}"
     "${MINMEA_DIR}"
+    "${U8G2_DIR}/csrc"
 )
 
 # Include directories for each compiler
@@ -140,7 +144,25 @@ target_sources(${CMAKE_PROJECT_NAME}
     "${HAL_DIR}/Src/stm32l4xx_hal_tim_ex.c"
     "${HAL_DIR}/Src/stm32l4xx_hal_dma.c"
 
+    "${U8G2_DIR}/csrc/u8g2_setup.c"
+    "${U8G2_DIR}/csrc/u8g2_d_setup.c"
+    "${U8G2_DIR}/csrc/u8g2_d_memory.c"
+    "${U8G2_DIR}/csrc/u8g2_buffer.c"
+    "${U8G2_DIR}/csrc/u8g2_fonts.c"
+    "${U8G2_DIR}/csrc/u8g2_font.c"
+    "${U8G2_DIR}/csrc/u8g2_hvline.c"
+    "${U8G2_DIR}/csrc/u8g2_ll_hvline.c"
+    "${U8G2_DIR}/csrc/u8g2_intersection.c"
+    "${U8G2_DIR}/csrc/u8x8_setup.c"
+    "${U8G2_DIR}/csrc/u8x8_display.c"
+    "${U8G2_DIR}/csrc/u8x8_8x8.c"
+    "${U8G2_DIR}/csrc/u8x8_d_ssd1327.c"
+    "${U8G2_DIR}/csrc/u8x8_cad.c"
+    "${U8G2_DIR}/csrc/u8x8_gpio.c"
+    "${U8G2_DIR}/csrc/u8x8_byte.c"
+
     "${GPS_DIR}/gps.c"
+    "${OLED_DIR}/oled.c"
     "${MINMEA_DIR}/minmea.c"
 )
 
